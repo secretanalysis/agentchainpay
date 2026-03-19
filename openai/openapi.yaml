@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: AgentChainPay Alpha (Tron)
+  version: 0.1.0
+paths:
+  /v1/agents/register:
+    post:
+      summary: Register agent DID with commitment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                did: { type: string }
+                commitment: { type: string }
+                expiresAt: { type: integer }
+  /v1/king/elect:
+    post:
+      summary: Elect King (operator use)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operator: { type: string }
+                candidates: { type: array, items: { type: string } }
