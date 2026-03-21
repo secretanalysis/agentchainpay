@@ -1,29 +1,72 @@
-// src/cli.ts
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
 import { createAgentToken } from "./agentToken";
+import { runGA } from "./ga";
 import { PrimePowerRegistry } from "./primes";
 import { runSim } from "./simulator";
-import { runGA } from "./ga";
 
-// Simple CLI wrapper for demo actions
-const argv = yargs(hideBin(process.argv))
-  .command("demo", "run demo token flow", {}, async () => {
-    const reg = new PrimePowerRegistry(["CREATE","SETTLE","DISPUTE","CHALLENGE","RELAYER"]);
-    const product = reg.encodeCapabilities(["CREATE","SETTLE"]);
-    const signer = "deadc0de"; // placeholder hex -> replace with key material / HSM reference
-    const token = createAgentToken("did:tron:alpha-origin", product, 3600, signer);
-    console.log("Commitment", token.commitment);
-    console.log("Registered caps:", reg.listRegistered());
-    console.log("In-memory checks: CREATE:", reg.hasCapability(product, "CREATE"));
-  })
-  .command("sim", "run simulator", (y) => y.option("ticks",{ type: "number", default: 200 }), async (args) => {
-    await runSim(args.ticks);
-  })
-  .command("ga", "run GA", (y) => y.options({ generations: { type: "number", default: 5 }, pop: { type: "number", default: 10 }}), async (args) => {
-    const top = await runGA(args.generations, args.pop);
-    console.log("Top GA candidates:", top);
-  })
-  .demandCommand(1)
-  .help()
-  .argv;
+type Command = "demo" | "sim" | "ga";
+
+type CliOptions = {
+  ticks: number;
+  generations: number;
+  pop: number;
+};
+
+async function main(): Promise<void> {
+  const [command, ...flags] = process.argv.slice(2);
+  const options = parseOptions(flags);
+
+  switch (command as Command) {
+    case "demo":
+      runDemo();
+      return;
+    case "sim":
+      await runSim(options.ticks);
+      return;
+    case "ga":
+      console.log("Top GA candidates:", await runGA(options.generations, options.pop));
+      return;
+    default:
+      printHelp();
+      process.exitCode = 1;
+  }
+}
+
+function runDemo(): void {
+  const registry = new PrimePowerRegistry(["CREATE", "SETTLE", "DISPUTE", "CHALLENGE", "RELAYER"]);
+  const product = registry.encodeCapabilities(["CREATE", "SETTLE"]);
+  const signer = "deadc0de";
+  const token = createAgentToken("did:tron:alpha-origin", product, 3600, signer);
+
+  console.log("Commitment", token.commitment);
+  console.log("Registered caps:", registry.listRegistered());
+  console.log("In-memory checks: CREATE:", registry.hasCapability(product, "CREATE"));
+}
+
+function parseOptions(flags: string[]): CliOptions {
+  const options: CliOptions = { ticks: 200, generations: 5, pop: 10 };
+
+  for (const flag of flags) {
+    const [name, rawValue] = flag.split("=");
+    if (!rawValue) continue;
+    const value = Number(rawValue);
+    if (Number.isNaN(value)) continue;
+
+    if (name === "--ticks") options.ticks = value;
+    if (name === "--generations") options.generations = value;
+    if (name === "--pop") options.pop = value;
+  }
+
+  return options;
+}
+
+function printHelp(): void {
+  console.log(`Usage:
+  npm run demo
+  npm run sim-short
+  npm run ga-short
+  ts-node src/cli.ts demo
+  ts-node src/cli.ts sim --ticks=200
+  ts-node src/cli.ts ga --generations=5 --pop=10`);
+}
+
+void main();
