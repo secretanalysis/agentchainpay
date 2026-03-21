@@ -6,7 +6,12 @@
     "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "types": []
   },
-  "include": ["src/**/*","deploy/**/*"]
+  "include": [
+    "src/**/*",
+    "deploy/**/*"
+  ]
 }
