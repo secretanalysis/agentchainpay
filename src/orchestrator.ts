@@ -12,7 +12,7 @@ export class Orchestrator {
   constructor() {
     this.eventBus = new EventEmitter();
     this.primes = new PrimePowerRegistry(["CREATE","SETTLE","DISPUTE","CHALLENGE","RELAYER"]);
-    this.state = { eventBus: this.eventBus, recentSignals: [], tick: 0, protocolTreasury: 0 };
+    this.state = { eventBus: this.eventBus, recentSignals: [], agentState: {}, tick: 0, protocolTreasury: 0 };
 
     this.eventBus.on("signal.posted", (s) => {
       this.state.recentSignals.push(s);
